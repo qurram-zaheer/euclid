@@ -6,7 +6,7 @@ import csv
 
 #### Initializing praw
 reddit = praw.Reddit('bot1')
-subreddit = reddit.subreddit('learnpython')
+
 
 #### Read the currently tracked IDs
 def gather_data():
@@ -28,8 +28,9 @@ def gather_data():
       print('Tracking file empty, populating...')
       
 
-      for submission in subreddit.rising(limit=50):
+      for submission in reddit.front.rising(limit=50):
         tracking_ids.append({'id': submission.id, 'created': submission.created_utc})
+        csv_writer.writerow([submission.id, time.time(), submission.num_comments, submission.score])
         
       
       with open('tracking_ids.csv', 'w', newline='') as track_file:
@@ -39,11 +40,12 @@ def gather_data():
         for item in tracking_ids:
           print(item['id'])
           trackid_writer.writerow([item['id'], item['created']])
-
+    
+    else:
     # Gather tracked post data
-    for tracking_objects in tracking_ids:
-      submission = reddit.submission(id=tracking_objects['id'])
-      csv_writer.writerow([submission.id, time.time(), submission.num_comments, submission.score])
+      for tracking_objects in tracking_ids:
+        submission = reddit.submission(id=tracking_objects['id'])
+        csv_writer.writerow([submission.id, time.time(), submission.num_comments, submission.score])
 
 
 #### Clear out the data
@@ -56,3 +58,7 @@ def reset_data():
 schedule.every().hour.at(':30').do(gather_data)
 
 schedule.every().tuesday.at('16:15').do(reset_data)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
